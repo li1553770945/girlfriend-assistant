@@ -4,7 +4,6 @@ from .config import Config
 
 
 global_config = get_driver().config
-print(global_config)
 config = Config.parse_obj(global_config)
 
 base_url = config.hefeng_base_url
@@ -100,9 +99,8 @@ def get_warn_from_api(city:str):
     messages = ""
     for warn in warns:
 
-        sender = warn['sender'] if warn['sender'] != "" else "未知发布者"
 
-        message = f"{sender}发布{warn['title']}:{warn['text']}\n"
+        message = f"{warn['text']}\n"
         messages  += message
 
     return messages if messages != "" else f"{city_name}暂无气象预警信息"

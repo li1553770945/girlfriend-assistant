@@ -1,6 +1,6 @@
 # girlfriend-assistant
 
-使用Nonebot2实现的一些生活和女朋友有关的消息辅助服务。
+使用[NoneBot2](https://github.com/nonebot/nonebot2)实现的一些生活和女朋友有关的消息辅助服务。
 
 ## 已经实现功能
 
