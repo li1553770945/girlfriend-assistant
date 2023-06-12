@@ -17,7 +17,6 @@ weather = on_command("天气",rule=to_me(), aliases={"weather", "查天气"}, pr
 async def get_default_city(**kwargs)->Message:
     user_id = kwargs['user_id']
     if city := await DefaultCityModel.filter(user_id=user_id).first():
-        print(city.city_name)
         return city.city_name
     else:
         return None
@@ -63,7 +62,10 @@ def get_warn(**kwargs)->Message:
     city = kwargs['city']
     if city is None:
         return Message(MessageSegment.text(f"当前未设置默认城市"))
-    return Message(MessageSegment.text(get_warn_from_api(city)))
+    warn = get_warn_from_api(city)
+    if warn is None:
+        warn = "当前城市暂无预警"
+    return Message(MessageSegment.text(warn))
 
 
 async def handle_params(params:str,user_id:str):

@@ -103,7 +103,7 @@ def get_warn_from_api(city:str):
         message = f"{warn['text']}\n"
         messages  += message
 
-    return messages if messages != "" else f"{city_name}暂无气象预警信息"
+    return messages if messages != "" else None
 
 
     
