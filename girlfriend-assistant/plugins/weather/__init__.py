@@ -1,7 +1,7 @@
 from nonebot import on_command
 from nonebot.rule import to_me
 from nonebot.params import CommandArg
-from nonebot.adapters.onebot.v11 import Message,MessageSegment,Event
+from nonebot.adapters import Message,Event
 from nonebot import require
 from .weather import get_tody_weather_from_api,get_now_weather_from_api,get_warn_from_api
 from .models import DefaultCityModel
@@ -11,10 +11,10 @@ import asyncio
 
 add_model("girlfriend-assistant.plugins.weather.models")
 
-weather = on_command("天气",rule=to_me(), aliases={"weather", "查天气"}, priority=10, block=True)
+weather = on_command("天气",rule=to_me(), aliases={"weather", "查天气","w"}, priority=10, block=True)
 
 
-async def get_default_city(**kwargs)->Message:
+async def get_default_city(**kwargs)->str:
     user_id = kwargs['user_id']
     if city := await DefaultCityModel.filter(user_id=user_id).first():
         return city.city_name
@@ -22,20 +22,20 @@ async def get_default_city(**kwargs)->Message:
         return None
     
 
-async def set_default_city(**kwargs)->Message:
+async def set_default_city(**kwargs)->str:
     city_name = kwargs['city']
     user_id = kwargs['user_id']
     if city_name is None:
-        return Message(MessageSegment.text(f"设置失败，使用“/天气 帮助”获取帮助"))
+        return f"设置失败，使用“/天气 帮助”获取帮助"
     else:
         if city := await DefaultCityModel.filter(user_id=user_id).first():
             city.city_name = city_name
             await city.save()
         else:
             await DefaultCityModel.create(city_name = city_name,user_id=user_id)
-        return Message(MessageSegment.text(f"设置成功"))
+        return "设置成功"
     
-def get_help(**kwargs)->Message:
+def get_help(**kwargs)->str:
     help_message = "使用方法：/天气 [命令] [城市]\n \
         可选命令有：\n \
         1.今日天气 [城市] ：查询对应城市的今日天气，不加城市则为默认城市  \n \
@@ -44,28 +44,28 @@ def get_help(**kwargs)->Message:
         4.设置默认天气[城市] : 设置默认城市 \n \
         5.帮助 : 显示帮助"
     
-    return Message(MessageSegment.text(help_message))
+    return help_message
 
-def get_now_weather(**kwargs)->Message:
+def get_now_weather(**kwargs)->str:
     city = kwargs['city']
     if city is None:
-        return Message(MessageSegment.text(f"当前未设置默认城市"))
-    return Message(MessageSegment.text(get_now_weather_from_api(city)))
+        return "当前未设置默认城市"
+    return get_now_weather_from_api(city)
 
-def get_tody_weather(**kwargs)->Message:
+def get_tody_weather(**kwargs):
     city = kwargs['city']
     if city is None:
-        return Message(MessageSegment.text(f"当前未设置默认城市"))
-    return Message(MessageSegment.text(get_tody_weather_from_api(city)))
+        return f"当前未设置默认城市"
+    return get_tody_weather_from_api(city)
 
-def get_warn(**kwargs)->Message:
+def get_warn(**kwargs)->str:
     city = kwargs['city']
     if city is None:
-        return Message(MessageSegment.text(f"当前未设置默认城市"))
+        return "当前未设置默认城市"
     warn = get_warn_from_api(city)
     if warn is None:
-        warn = "当前城市暂无预警"
-    return Message(MessageSegment.text(warn))
+        warn = f"{city}暂无气象预警"
+    return warn
 
 
 async def handle_params(params:str,user_id:str):
