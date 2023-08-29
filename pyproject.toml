@@ -7,7 +7,8 @@ requires-python = ">=3.8, <4.0"
 
 [tool.nonebot]
 adapters = [
-    { name = "Walle-Q", module_name = "nonebot_adapter_walleq" }
+    { name = "Walle-Q", module_name = "nonebot_adapter_walleq" },
+    {name = "mirai2", module_name = "nonebot.adapters.mirai2"}
 ]
 plugins = ["nonebot_plugin_tortoise_orm", "nonebot_plugin_apscheduler"]
 plugin_dirs = ["girlfriend-assistant/plugins"]
