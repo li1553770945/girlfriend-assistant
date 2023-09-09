@@ -22,9 +22,13 @@ HEFENG_BASE_URL=[和风天气API基础URL](https://dev.qweather.com/docs/api/wea
 2. MIRAI 相关
 
 VERIFY_KEY=xxx # MiraiApiHttp2 配置文件里的 token
+
 MIRAI_HOST=127.0.0.1  # MiraiApiHttp2 的 ip
+
 MIRAI_PORT=5700 # MiraiApiHttp2 的端口
+
 MIRAI_QQ=["xxxxxxx"]  # Mirai 上已经登录的 qq 号
+
 SUPERUSERS=[]  # nonebot2 的超管(也可理解为bot的主人什么的)
 
 3. 数据库相关
