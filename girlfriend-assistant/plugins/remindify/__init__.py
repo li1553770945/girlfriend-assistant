@@ -40,8 +40,13 @@ async def notify():
     while (remind := await RemindModel.filter(have_notified=False).order_by("remind_time").first()) is not None:
         delta_time = remind.remind_time - datetime.now(pytz.timezone('Asia/Shanghai'))
         if delta_time.total_seconds() < 10:
-            msg = f"小助手温馨提示:\n提醒id:{remind.id}\n时间:{remind.remind_time.strftime('%Y-%m-%d %H:%M')}\n内容:{remind.remark}"
-            await bot.send_friend_message(target=int(remind.user_id),message_chain=[{ "type":"Plain", "text":msg }])
+            msg = f"小助手温馨提示:\n提醒id:{remind.id}\n时间:{remind.remind_time.strftime('%Y-%m-%d %H:%M:%S')}\n内容:{remind.remark}"
+
+            if remind.group_id != "": # 群聊中创建的提醒
+                await bot.send_group_message(target=int(remind.group_id),message_chain=[{"type": "At","target": int(remind.user_id)},{ "type":"Plain", "text":msg }])
+            else:
+                await bot.send_friend_message(target=int(remind.user_id),message_chain=[{ "type":"Plain", "text":msg }])
+
             remind.have_notified = True
             await remind.save()
         else:
@@ -61,20 +66,33 @@ help_str="""使用帮助:
 2.add [时间] [事项]
 时间可以为: "2021-02-13 13:14"、"13:14"、"13"三种.分别代表:日期时间，时间（默认今天）,几分钟之后
 3.remove [提醒id]
+如果私聊发给助手，则提醒会私聊发给发送者。如果在群里@助手，则提醒会在群里@发送者。
+查询提醒，对每个人来说，私聊查询会显示所有提醒，在群里@只会显示本群本人创建的提醒。
 """
 
-async def add_remind(user_id,remind_time:datetime,remark):
-    remind = await RemindModel.create(user_id=user_id,remind_time=remind_time,remark=remark)
+async def add_remind(user_id,remind_time:datetime,remark,group_id):
+    remind = await RemindModel.create(user_id=user_id,remind_time=remind_time,remark=remark,group_id=group_id)
     await notify()
-    return f"成功添加{remind_time.strftime('%Y-%m-%d %H:%M')}的提醒,id为{remind.id}"
+    result = f"成功添加{remind_time.strftime('%Y-%m-%d %H:%M:%S')}的提醒,id为{remind.id}"
+    if group_id != "":
+        result += ",提醒将在本群发送"
+    return result
 
-async def list_remind(user_id):
-    remind_list = await RemindModel.filter(user_id=user_id,have_notified=False).all()
+async def list_remind(user_id,group_id):
+    remind_list = await RemindModel.filter(user_id=user_id,have_notified=False).all().order_by("remind_time")
     if len(remind_list) == 0:
+        if group_id != "":
+            return "当前暂无未完成提醒,当前仅显示您在本群创建的提醒"
         return "当前暂无未完成提醒"
     result = ""
+    if group_id != "":
+        result += "当前仅显示您在本群创建的提醒\n"
     for index,remind in enumerate(remind_list):
+        if group_id != "" and group_id != remind.group_id: # 从群里发送仅显示本群的提醒
+            continue
         result = result + str(index+1) + "、" + str(remind)
+        if group_id == "" and remind.group_id != "": # 从群里创建，但是私聊查询的，会在每个提醒后加上一句话
+            result += f",在群{remind.group_id}中创建"
         if index != len(remind_list) - 1:
             result += "\n"
     return result
@@ -108,7 +126,7 @@ def parse_datetime(input_str): # 把时间字符串，格式化成datetime
     except ValueError:
         raise ValueError("输入字符串不是有效的日期时间格式")
     
-async def handle_command(user_id,params): # 处理命令
+async def handle_command(user_id,params,group_id): # 处理命令
     params = params.split(' ')
     if params[0] in ("add","a"):
         if len(params) != 3 and len(params) != 4:
@@ -122,12 +140,12 @@ async def handle_command(user_id,params): # 处理命令
         except:
             return "添加失败,参数错误,使用参数h查看帮助"
         
-        result = await add_remind(user_id,remind_time,params[2])
+        result = await add_remind(user_id,remind_time,params[2],group_id)
         return result
 
 
     elif params[0] in ("list","l"):
-        result = await list_remind(user_id)
+        result = await list_remind(user_id,group_id)
         return result
     
     elif params[0] in ("remove","r"):
@@ -141,7 +159,7 @@ async def handle_command(user_id,params): # 处理命令
         result = await remove_remind(user_id,remind_id)
         return result
     
-    elif params[0] in ("help","h"):
+    elif params[0] in ("help","h","帮助"):
         return help_str
 
     else:
@@ -151,5 +169,13 @@ async def handle_command(user_id,params): # 处理命令
 async def handle_function(event:Event,args: Message = CommandArg(),):
     params = args.extract_plain_text()
     user_id = event.get_user_id()
-    result = await handle_command(user_id,params)
+
+    msg_type = event.type
+    if msg_type == "GroupMessage":
+        group_id = str(event.sender.group.id)
+    else:
+        group_id = ""
+
+    result = await handle_command(user_id,params,group_id)
+    print(result)
     await remindify.finish(result)

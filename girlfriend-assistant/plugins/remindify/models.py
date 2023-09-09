@@ -16,4 +16,4 @@ class RemindModel(Model):
 
     def __str__(self) -> str:
         end = "......" if len(self.remark) > 20 else ""
-        return f"提醒id:{self.id},时间:{self.remind_time.strftime('%Y-%m-%d %H:%M')},事项:{self.remark[0:20] + end}"
+        return f"提醒id:{self.id},时间:{self.remind_time.strftime('%Y-%m-%d %H:%M:%S')},事项:{self.remark[0:20] + end}"
