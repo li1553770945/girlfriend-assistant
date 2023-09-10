@@ -5,7 +5,6 @@ require("nonebot_plugin_apscheduler")
 require("nonebot_plugin_tortoise_orm")
 
 from nonebot_plugin_tortoise_orm import add_model
-import nonebot_plugin_apscheduler
 from nonebot.rule import to_me
 from nonebot.adapters import Message,Event
 from nonebot.params import CommandArg
@@ -13,9 +12,8 @@ from datetime import datetime,timedelta
 from nonebot_plugin_apscheduler import scheduler
 from .models import RemindModel
 from .config import Config
-import asyncio
 import pytz
-
+import asyncio
 
 
 global_config = get_driver().config
@@ -55,7 +53,6 @@ async def notify():
 
 scheduler.add_job(notify, "date", run_date=datetime.now(),id="remind_job",replace_existing=True)
 
-print(123)
 
 
 help_str="""使用帮助:
@@ -177,5 +174,4 @@ async def handle_function(event:Event,args: Message = CommandArg(),):
         group_id = ""
 
     result = await handle_command(user_id,params,group_id)
-    print(result)
     await remindify.finish(result)
